@@ -4,29 +4,31 @@ from app import app
 from models import db, Cupcake
 
 # Use test database and don't clutter tests with SQL
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///cupcakes_test'
+app.config["SQLALCHEMY_BINDS"] = {"testing": "postgresql:///cupcakes_test"}
 app.config['SQLALCHEMY_ECHO'] = False
 
 # Make Flask errors be real errors, rather than HTML pages with error info
 app.config['TESTING'] = True
+with app.app_context():
+    db.drop_all(bind_key='testing')
+    db.create_all(bind_key='testing')
 
-db.drop_all()
-db.create_all()
 
+    CUPCAKE_DATA = {
+        "flavor": "TestFlavor",
+        "size": "TestSize",
+        "rating": 5,
+        "image": "http://test.com/cupcake.jpg"
+    }
 
-CUPCAKE_DATA = {
-    "flavor": "TestFlavor",
-    "size": "TestSize",
-    "rating": 5,
-    "image": "http://test.com/cupcake.jpg"
-}
-
-CUPCAKE_DATA_2 = {
-    "flavor": "TestFlavor2",
-    "size": "TestSize2",
-    "rating": 10,
-    "image": "http://test.com/cupcake2.jpg"
-}
+    CUPCAKE_DATA_2 = {
+        "flavor": "TestFlavor2",
+        "size": "TestSize2",
+        "rating": 10,
+        "image": "http://test.com/cupcake2.jpg"
+    }
 
 
 class CupcakeViewsTestCase(TestCase):
@@ -34,19 +36,19 @@ class CupcakeViewsTestCase(TestCase):
 
     def setUp(self):
         """Make demo data."""
+        with app.app_context():
+            Cupcake.query.delete()
 
-        Cupcake.query.delete()
+            cupcake = Cupcake(**CUPCAKE_DATA)
+            db.session.add(cupcake)
+            db.session.commit()
 
-        cupcake = Cupcake(**CUPCAKE_DATA)
-        db.session.add(cupcake)
-        db.session.commit()
-
-        self.cupcake = cupcake
+            self.id = cupcake.id
 
     def tearDown(self):
         """Clean up fouled transactions."""
-
-        db.session.rollback()
+        with app.app_context():
+            db.session.rollback()       
 
     def test_list_cupcakes(self):
         with app.test_client() as client:
@@ -58,7 +60,7 @@ class CupcakeViewsTestCase(TestCase):
             self.assertEqual(data, {
                 "cupcakes": [
                     {
-                        "id": self.cupcake.id,
+                        "id": self.id,
                         "flavor": "TestFlavor",
                         "size": "TestSize",
                         "rating": 5,
@@ -69,14 +71,14 @@ class CupcakeViewsTestCase(TestCase):
 
     def test_get_cupcake(self):
         with app.test_client() as client:
-            url = f"/api/cupcakes/{self.cupcake.id}"
+            url = f"/api/cupcakes/{self.id}"
             resp = client.get(url)
 
             self.assertEqual(resp.status_code, 200)
             data = resp.json
             self.assertEqual(data, {
                 "cupcake": {
-                    "id": self.cupcake.id,
+                    "id": self.id,
                     "flavor": "TestFlavor",
                     "size": "TestSize",
                     "rating": 5,
