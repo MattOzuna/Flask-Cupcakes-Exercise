@@ -13,7 +13,7 @@ connect_db(app)
 
 @app.route('/api/cupcakes')
 def get_cupcakes():
-    cupcakes = Cupcake.query.all()
+    cupcakes = db.session.query(Cupcake).all()
     data = [cupcake.serialize_cupcake() for cupcake in cupcakes]
     return jsonify(cupcakes=data)
 
@@ -34,6 +34,7 @@ def add_cupcake():
     db.session.commit()
     return (jsonify(cupcake=new_cupcake.serialize_cupcake()), 201)
 
+
 @app.route('/api/cupcakes/<int:id>', methods=['PATCH'])
 def update_cupcake(id):
     cupcake = Cupcake.query.get_or_404(id)
@@ -44,6 +45,7 @@ def update_cupcake(id):
     db.session.commit()
 
     return jsonify(cupcake=cupcake.serialize_cupcake())
+
 
 @app.route('/api/cupcakes/<int:id>', methods=['DELETE'])
 def delete_cupcake(id):
