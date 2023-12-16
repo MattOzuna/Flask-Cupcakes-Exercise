@@ -1,5 +1,6 @@
 from flask import Flask, render_template, flash, redirect, jsonify, request
 from models import db, connect_db, Cupcake
+from forms import AddCupcakeForm
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "oh-so-secret"
@@ -9,7 +10,15 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 connect_db(app)
 
-# //==============================//API Routes//==============================//
+##==============================//Front-End Route//==============================##
+
+@app.route('/')
+def home_page():
+    cupcakes = db.session.query(Cupcake).all()
+    form = AddCupcakeForm()
+    return render_template('home-page.html', cupcakes=cupcakes, form=form)
+
+##==============================//API Routes//==============================##
 
 @app.route('/api/cupcakes')
 def get_cupcakes():
@@ -29,7 +38,7 @@ def add_cupcake():
     new_cupcake= Cupcake(flavor=request.json["flavor"],
                          size=request.json["size"],
                          rating=request.json['rating'],
-                         image= request.json['image'])
+                         image= request.json['image'] if request.json['image'] else None)
     db.session.add(new_cupcake)
     db.session.commit()
     return (jsonify(cupcake=new_cupcake.serialize_cupcake()), 201)

@@ -1,0 +1,30 @@
+{% extends 'base.html'  %}
+{% block title %}
+Cupcakes
+{% endblock%}
+{% block content %}
+<div class="container-sm">
+    <h1 class="display-1 text-center">All Cupcakes</h1>
+    <ul class="row justify-content-center">
+        {% for cupcake in cupcakes %}
+            <div class="col-md-3">
+                <img src="{{cupcake.image}}" class="img-thumbnail" alt="{{cupcake.flavor}} cupcake">
+                <li>{{cupcake.flavor}} cupcake</li>
+            </div>
+        {% endfor %}
+    </ul>
+
+    <div>
+        <form action="">
+            {{ form.hidden_tag() }}
+            {% for field in form if field.widget.input_type != 'hidden'%}
+            <div>
+                {{field.label(class_="form-label")}}
+                {{field(class_="form-control")}}
+            </div>
+            {% endfor %}
+            <button class="btn btn-primary">Add Cupcake</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
